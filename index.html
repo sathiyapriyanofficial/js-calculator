@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tailwind CSS Calculator — Single File</title>
+  <!-- Tailwind Play CDN for quick demo (no build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* small polished touch */
+    html,
+    body {
+      height: 100%
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+  <main class="w-full max-w-md">
+    <section class="bg-slate-900/60 backdrop-blur rounded-2xl shadow-2xl p-6">
+      <header class="mb-4">
+        <h1 class="text-white text-2xl font-semibold">Calculator</h1>
+        <p class="text-sm text-slate-300">Tailwind CSS — Single-file demo</p>
+      </header>
+
+      <div class="rounded-xl overflow-hidden bg-gradient-to-b from-slate-800 to-slate-900 p-4">
+        <div id="display"
+          class="bg-black/70 text-right text-4xl text-white font-mono p-4 rounded-lg break-words min-h-[70px]"
+          tabindex="0">0</div>
+
+        <div class="grid grid-cols-4 gap-3 mt-4">
+          <!-- Row 1 -->
+          <button class="btn col-span-1 py-3 rounded-lg bg-slate-700 text-white text-lg font-medium hover:bg-slate-600"
+            data-action="clear">AC</button>
+          <button class="btn col-span-1 py-3 rounded-lg bg-slate-700 text-white text-lg font-medium hover:bg-slate-600"
+            data-action="plusminus">+/-</button>
+          <button class="btn col-span-1 py-3 rounded-lg bg-slate-700 text-white text-lg font-medium hover:bg-slate-600"
+            data-action="percent">%</button>
+          <button
+            class="btn col-span-1 py-3 rounded-lg bg-orange-500 text-white text-lg font-medium hover:bg-orange-400"
+            data-action="op">÷</button>
+
+          <!-- Row 2 -->
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="7">7</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="8">8</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="9">9</button>
+          <button class="btn py-4 rounded-lg bg-orange-500 text-white text-xl font-semibold" data-action="op">×</button>
+
+          <!-- Row 3 -->
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="4">4</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="5">5</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="6">6</button>
+          <button class="btn py-4 rounded-lg bg-orange-500 text-white text-xl font-semibold" data-action="op">-</button>
+
+          <!-- Row 4 -->
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="1">1</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="2">2</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num="3">3</button>
+          <button class="btn py-4 rounded-lg bg-orange-500 text-white text-xl font-semibold" data-action="op">+</button>
+
+          <!-- Row 5 -->
+          <button class="btn col-span-2 py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold"
+            data-num="0">0</button>
+          <button class="btn py-4 rounded-lg bg-slate-700 text-white text-xl font-semibold" data-num=".">.</button>
+          <button class="btn py-4 rounded-lg bg-emerald-500 text-white text-xl font-semibold"
+            data-action="equals">=</button>
+        </div>
+      </div>
+
+      <footer class="mt-4 text-xs text-slate-400 text-center">Keyboard support: numbers, + - * /, Enter, Backspace, Esc
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    // Simple calculator logic (single-file).
+    (function () {
+      const display = document.getElementById('display');
+      let current = '0';
+      let previous = null;
+      let operator = null;
+      let lastPressed = null;
+
+      function updateDisplay() {
+        display.textContent = current;
+      }
+
+      function clearAll() {
+        current = '0'; previous = null; operator = null; lastPressed = null; updateDisplay();
+      }
+
+      function appendNumber(n) {
+        if (lastPressed === 'equals') { current = '0'; }
+        if (n === '.' && current.includes('.')) return;
+        if (current === '0' && n !== '.') current = n;
+        else current = current + n;
+        lastPressed = 'num';
+        updateDisplay();
+      }
+
+      function setOperator(op) {
+        if (operator && lastPressed === 'num') compute();
+        previous = parseFloat(current);
+        operator = op;
+        current = '0';
+        lastPressed = 'op';
+      }
+
+      function compute() {
+        if (operator == null || previous == null) return;
+        const a = previous;
+        const b = parseFloat(current);
+        let result = 0;
+        switch (operator) {
+          case '+': result = a + b; break;
+          case '-': result = a - b; break;
+          case '*': result = a * b; break;
+          case '/': result = b === 0 ? 'Error' : a / b; break;
+        }
+        current = (typeof result === 'number') ? formatResult(result) : String(result);
+        previous = null; operator = null; lastPressed = 'equals';
+        updateDisplay();
+      }
+
+      function formatResult(n) {
+        // Limit to a reasonable number of decimals, remove trailing zeros
+        if (!isFinite(n)) return 'Error';
+        const s = parseFloat(n.toFixed(10)).toString();
+        return s;
+      }
+
+      function percent() {
+        current = String(parseFloat(current) / 100);
+        updateDisplay();
+      }
+
+      function plusMinus() {
+        if (current === '0') return;
+        current = String(parseFloat(current) * -1);
+        updateDisplay();
+      }
+
+      // Button handling
+      document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const num = btn.dataset.num;
+          const action = btn.dataset.action;
+          if (num !== undefined) appendNumber(num);
+          else if (action === 'clear') clearAll();
+          else if (action === 'percent') percent();
+          else if (action === 'plusminus') plusMinus();
+          else if (action === 'equals') compute();
+          else if (action === 'op') {
+            // map visible symbol to operator
+            const symbol = btn.textContent.trim();
+            const map = { '+': '+', '-': '-', '×': '*', '÷': '/' };
+            setOperator(map[symbol]);
+          }
+        });
+      });
+
+      // Keyboard support
+      window.addEventListener('keydown', (e) => {
+        if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+        else if (e.key === '.') appendNumber('.');
+        else if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); compute(); }
+        else if (e.key === 'Backspace') {
+          if (current.length > 1) current = current.slice(0, -1);
+          else current = '0';
+          updateDisplay();
+        }
+        else if (e.key === 'Escape') clearAll();
+        else if (['+', '-', '*', '/'].includes(e.key)) setOperator(e.key);
+      });
+
+      // init
+      clearAll();
+    })();
+  </script>
+</body>
+
+</html>
